@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Interactive Smartphone Mockup</title>
+  <title>Interactive Smartphone Mockup — Full App Store</title>
   <style>
     /* Page + phone frame */
     :root {
@@ -147,12 +147,71 @@
     .call-row { display:flex; justify-content:center; gap:28px; align-items:center; margin-top:18px; }
     .call-btn { width:66px;height:66px;border-radius:50%;background:#4cd964;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px; cursor:pointer; }
 
-    /* App store list */
-    .store-list { display:flex;flex-direction:column; gap:12px; margin-top:6px; }
-    .store-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; border-radius:12px; background:rgba(255,255,255,0.95); box-shadow:0 6px 14px rgba(0,0,0,0.08); }
-    .store-left { display:flex; gap:12px; align-items:center; }
-    .get-btn { padding:8px 12px; background:#007aff; color:#fff; border-radius:12px; border:0; cursor:pointer; font-weight:700; }
-    .get-btn.installed { background:#e6e7eb; color:#007aff; font-weight:700; }
+    /* App store full UI */
+    .store-top {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .search {
+      flex:1;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .search input {
+      flex:1;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid #e6e7eb;
+      font-size:14px;
+    }
+    .categories { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+    .chip { padding:6px 10px; border-radius:999px; background:#f0f0f3; color:#111; font-weight:700; cursor:pointer; font-size:13px; }
+    .chip.active { background:#007aff; color:#fff; }
+
+    .store-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:6px; }
+
+    .app-card {
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:10px;
+      border-radius:10px;
+      background:linear-gradient(180deg,#fff,#f7f7f9);
+      box-shadow:0 8px 18px rgba(0,0,0,0.06);
+    }
+    .card-icon { width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px; }
+    .card-body { flex:1; }
+    .card-title { font-weight:800; margin-bottom:4px; }
+    .card-desc { font-size:12px; color:#666; margin-bottom:8px; }
+
+    .card-actions { display:flex; gap:8px; align-items:center; }
+
+    .small-btn { padding:6px 8px; border-radius:8px; border:0; background:#007aff; color:#fff; cursor:pointer; font-weight:700; font-size:13px; }
+    .small-btn.secondary { background:#e6e7eb; color:#111; }
+
+    .load-more { margin-top:12px; display:flex; justify-content:center; }
+
+    /* App detail overlay */
+    .detail-overlay {
+      position:fixed;
+      inset:0;
+      display:none;
+      z-index:120;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,0.6);
+    }
+    .detail-card {
+      width:320px;
+      max-height:80vh;
+      background:#fff;
+      border-radius:12px;
+      padding:16px;
+      overflow:auto;
+    }
 
     /* Home indicator */
     .home-indicator {
@@ -164,15 +223,6 @@
       z-index:60;
       cursor:pointer;
     }
-
-    /* App header */
-    .app-header { display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:18px; margin-bottom:8px; }
-
-    /* Paint */
-    .paint-canvas { width:100%; border-radius:12px; background:white; touch-action:none; }
-
-    /* Snake */
-    .snake-canvas { background:#000; border-radius:8px; }
 
     /* small button */
     .btn { padding:8px 10px; border-radius:10px; border:0; background:#007aff; color:white; font-weight:700; cursor:pointer; }
@@ -208,13 +258,9 @@
               <div class="icon store">A</div>
               <div class="label">App Store</div>
             </div>
-
-            <!-- placeholder slots -->
-            <div class="app" id="slot-1" style="visibility:hidden"><div class="icon" style="background:#ddd"></div><div class="label">.</div></div>
-            <div class="app" id="slot-2" style="visibility:hidden"><div class="icon" style="background:#ddd"></div><div class="label">.</div></div>
           </div>
 
-          <div class="footer">Swipe up for more (click the bar)</div>
+          <div class="footer">Tap the Home bar or a Home button to return</div>
         </div>
       </div>
 
@@ -249,39 +295,26 @@
         </div>
       </div>
 
-      <!-- App: App Store -->
+      <!-- App: App Store (full) -->
       <div id="store" class="app-window light" aria-hidden="true">
         <div class="app-header">
           <div>App Store</div>
           <div><button class="btn" onclick="goHome()">Home</button></div>
         </div>
 
-        <div class="store-list">
-          <div class="store-item">
-            <div class="store-left">
-              <div class="icon snake" style="width:45px;height:45px;border-radius:10px;display:flex;align-items:center;justify-content:center">🎮</div>
-              <div>
-                <div style="font-weight:800">Snake</div>
-                <div style="font-size:12px;color:#666">Classic arcade game</div>
-              </div>
-            </div>
-            <div>
-              <button id="btn-snake" class="get-btn" onclick="installApp('snake','🎮','Snake','#111')">GET</button>
-            </div>
+        <div class="store-top">
+          <div class="search">
+            <input id="store-search" placeholder="Search apps..." oninput="renderStore()" />
+            <button class="small-btn" onclick="resetStoreFilters()">Reset</button>
           </div>
+        </div>
 
-          <div class="store-item">
-            <div class="store-left">
-              <div class="icon paint" style="width:45px;height:45px;border-radius:10px;display:flex;align-items:center;justify-content:center">🎨</div>
-              <div>
-                <div style="font-weight:800">Paint</div>
-                <div style="font-size:12px;color:#666">Simple drawing canvas</div>
-              </div>
-            </div>
-            <div>
-              <button id="btn-paint" class="get-btn" onclick="installApp('paint','🎨','Paint','#ffcc00')">GET</button>
-            </div>
-          </div>
+        <div class="categories" id="categories"></div>
+
+        <div class="store-grid" id="store-grid"></div>
+
+        <div class="load-more" id="load-more-container">
+          <button class="small-btn" onclick="loadMore()">Load more</button>
         </div>
       </div>
 
@@ -315,12 +348,22 @@
         </div>
       </div>
 
+      <!-- Generic app container for dynamically-created apps -->
+      <div id="app-generic-container"></div>
+
+      <!-- App Detail overlay -->
+      <div id="detail-overlay" class="detail-overlay" onclick="hideDetail(event)">
+        <div class="detail-card" id="detail-card" onclick="event.stopPropagation()">
+          <!-- filled dynamically -->
+        </div>
+      </div>
+
       <div class="home-indicator" onclick="goHome()" title="Home"></div>
     </div>
   </div>
 
   <script>
-    // Clock
+    // --- System clock
     function updateClock() {
       const now = new Date();
       const hh = String(now.getHours()).padStart(2,'0');
@@ -330,38 +373,39 @@
     updateClock();
     setInterval(updateClock, 1000);
 
-    // Navigation
+    // --- Navigation helpers
     function openApp(id, lightTheme = true) {
-      // hide home grid
-      document.getElementById('home-grid').style.display = 'grid';
       document.querySelectorAll('.app-window').forEach(w => {
         w.classList.remove('active');
         w.setAttribute('aria-hidden','true');
       });
+      // show requested window
       const win = document.getElementById(id);
       if (!win) return;
       win.classList.add('active');
       win.setAttribute('aria-hidden','false');
-
-      // For visual: hide home area
       document.getElementById('home').style.display = 'none';
-      // status bar color
       document.querySelector('.status').style.color = lightTheme ? '#000' : '#fff';
-      // adjust home-indicator color for dark windows
       document.querySelector('.home-indicator').style.background = lightTheme ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.85)';
     }
 
     function goHome() {
-      document.getElementById('home').style.display = 'block';
+      // hide all app windows
       document.querySelectorAll('.app-window').forEach(w => {
         w.classList.remove('active');
         w.setAttribute('aria-hidden','true');
       });
+      // hide any generic apps
+      const gen = document.getElementById('app-generic-container');
+      gen.innerHTML = '';
+      document.getElementById('home').style.display = 'block';
       document.querySelector('.status').style.color = '#fff';
       document.querySelector('.home-indicator').style.background = 'rgba(255,255,255,0.8)';
+      // stop snake if active
+      if (typeof stopSnake === 'function') stopSnake();
     }
 
-    // Dialer logic
+    // --- Dialer
     let dial = '';
     function pressKey(k) {
       dial += k;
@@ -376,39 +420,248 @@
       alert('Calling ' + dial);
     }
 
-    // App installation flow
-    const installed = {};
-    function installApp(id, icon, label, bg) {
-      if (installed[id]) {
-        // open existing
-        openApp('app-' + id, id === 'paint');
-        return;
-      }
-      const btn = document.getElementById('btn-' + id);
-      if (!btn) return;
-      btn.textContent = 'LOADING...';
-      btn.disabled = true;
-      setTimeout(() => {
-        btn.textContent = 'OPEN';
-        btn.classList.add('installed');
-        btn.disabled = false;
-        btn.onclick = () => openApp('app-' + id, id === 'paint');
+    // --- App store data & state
+    const storeApps = [
+      {id:'snake', icon:'🎮', name:'Snake', desc:'Classic arcade snake', bg:'#111', category:'Games', hasWindow:true},
+      {id:'paint', icon:'🎨', name:'Paint', desc:'Simple drawing canvas', bg:'#ffcc00', category:'Creativity', hasWindow:true},
+      {id:'notes', icon:'📝', name:'Notes', desc:'Quick note-taking', bg:'#ffa500', category:'Productivity'},
+      {id:'weather', icon:'☀️', name:'Weather', desc:'Local weather & forecast', bg:'#2bb3ff', category:'Utilities'},
+      {id:'music', icon:'🎵', name:'Music', desc:'Stream demo songs', bg:'#6a0dad', category:'Entertainment'},
+      {id:'puzzle', icon:'🧩', name:'Puzzle Fun', desc:'Relaxing puzzles', bg:'#ff6b6b', category:'Games'},
+      {id:'timer', icon:'⏱️', name:'Timer', desc:'Multiple timers', bg:'#33cc99', category:'Utilities'},
+      {id:'todo', icon:'✅', name:'To-Do', desc:'Tasks & reminders', bg:'#007aff', category:'Productivity'},
+      {id:'maps', icon:'🗺️', name:'Maps', desc:'Mini map demo', bg:'#00a86b', category:'Travel'},
+      {id:'camera', icon:'📷', name:'Camera', desc:'Mock camera app', bg:'#ff7f50', category:'Photography'},
+      {id:'calc', icon:'🧮', name:'Calculator', desc:'Basic calculations', bg:'#8b8bff', category:'Utilities'},
+      {id:'chat', icon:'💬', name:'Chat', desc:'Local mock messaging', bg:'#ff5c8a', category:'Social'},
+      {id:'photo-edit', icon:'🖼️', name:'Photo Edit', desc:'Simple photo filters', bg:'#c0a0ff', category:'Photography'},
+      {id:'recipes', icon:'🍲', name:'Recipes', desc:'Recipe browser', bg:'#f7c948', category:'Lifestyle'},
+      {id:'fitness', icon:'🏃', name:'Fitness', desc:'Short workouts', bg:'#4caf50', category:'Health'},
+      {id:'calendar', icon:'📅', name:'Calendar', desc:'Event reminders', bg:'#ff8c42', category:'Productivity'},
+      {id:'stocks', icon:'📈', name:'Stocks', desc:'Market overview', bg:'#3b82f6', category:'Finance'},
+      {id:'radio', icon:'📻', name:'Radio', desc:'Internet radio demo', bg:'#2b2b2b', category:'Entertainment'},
+      {id:'drawing', icon:'✏️', name:'Sketch', desc:'Quick sketches', bg:'#ffd166', category:'Creativity'},
+      {id:'sleep', icon:'🌙', name:'Sleep Aid', desc:'Relaxing sounds', bg:'#7185ff', category:'Health'},
+    ];
+    let installed = {}; // id -> true
+    let storeFilter = {search:'', category:'All', page:1, pageSize:6};
 
-        // add icon to home grid
-        const grid = document.getElementById('home-grid');
-        const appEl = document.createElement('div');
-        appEl.className = 'app';
-        appEl.onclick = () => openApp('app-' + id, id === 'paint');
-        appEl.innerHTML = `<div class="icon" style="background:${bg};">${icon}</div><div class="label">${label}</div>`;
-        grid.appendChild(appEl);
-
-        installed[id] = true;
-        alert(label + ' installed');
-      }, 800);
+    // --- Store UI rendering
+    function getCategories() {
+      const cats = new Set(['All']);
+      storeApps.forEach(a => cats.add(a.category));
+      return Array.from(cats);
     }
 
-    // Paint app
-    (function() {
+    function renderCategories() {
+      const box = document.getElementById('categories');
+      box.innerHTML = '';
+      getCategories().forEach(cat => {
+        const el = document.createElement('div');
+        el.className = 'chip' + (storeFilter.category === cat ? ' active' : '');
+        el.textContent = cat;
+        el.onclick = () => { storeFilter.category = (storeFilter.category === cat ? 'All' : cat); storeFilter.page = 1; renderStore(); };
+        box.appendChild(el);
+      });
+    }
+
+    function filteredApps() {
+      const q = document.getElementById('store-search').value.trim().toLowerCase();
+      return storeApps.filter(a => {
+        if (storeFilter.category !== 'All' && a.category !== storeFilter.category) return false;
+        if (q && !(a.name.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q))) return false;
+        return true;
+      });
+    }
+
+    function renderStore() {
+      renderCategories();
+      const grid = document.getElementById('store-grid');
+      grid.innerHTML = '';
+      const list = filteredApps();
+      const start = 0;
+      const page = storeFilter.page || 1;
+      const pageSize = storeFilter.pageSize;
+      const visible = list.slice(0, page * pageSize);
+      visible.forEach(app => {
+        const card = document.createElement('div');
+        card.className = 'app-card';
+        card.innerHTML = `
+          <div class="card-icon" style="background:${app.bg}; color:${getContrastText(app.bg)}">${app.icon}</div>
+          <div class="card-body">
+            <div class="card-title">${app.name}</div>
+            <div class="card-desc">${app.desc}</div>
+            <div style="display:flex;gap:8px;">
+              <button class="small-btn" onclick="openDetail('${app.id}')">Details</button>
+              <div class="card-actions" id="actions-${app.id}"></div>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+        renderAppActions(app);
+      });
+      // load more visibility
+      const loadMore = document.getElementById('load-more-container');
+      if (visible.length < list.length) loadMore.style.display = 'flex'; else loadMore.style.display = 'none';
+    }
+
+    function renderAppActions(app) {
+      const container = document.getElementById('actions-' + app.id);
+      container.innerHTML = '';
+      const btn = document.createElement('button');
+      if (installed[app.id]) {
+        btn.className = 'small-btn secondary';
+        btn.textContent = 'OPEN';
+        btn.onclick = () => openInstalledApp(app);
+        const uninstall = document.createElement('button');
+        uninstall.className = 'small-btn';
+        uninstall.textContent = 'UNINSTALL';
+        uninstall.onclick = () => uninstallApp(app.id);
+        container.appendChild(btn);
+        container.appendChild(uninstall);
+      } else {
+        btn.className = 'small-btn';
+        btn.textContent = 'GET';
+        btn.onclick = () => installApp(app.id, app.icon, app.name, app.bg, app);
+        container.appendChild(btn);
+      }
+    }
+
+    // load more
+    function loadMore() {
+      storeFilter.page = (storeFilter.page || 1) + 1;
+      renderStore();
+    }
+    function resetStoreFilters() {
+      document.getElementById('store-search').value = '';
+      storeFilter.category = 'All';
+      storeFilter.page = 1;
+      renderStore();
+    }
+
+    // detail overlay
+    function openDetail(id) {
+      const app = storeApps.find(a => a.id === id);
+      if (!app) return;
+      const card = document.getElementById('detail-card');
+      card.innerHTML = `
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
+          <div class="card-icon" style="background:${app.bg}; width:64px; height:64px; font-size:30px; color:${getContrastText(app.bg)}">${app.icon}</div>
+          <div style="flex:1;">
+            <div style="font-weight:900;font-size:18px">${app.name}</div>
+            <div style="color:#666;margin-top:6px">${app.category}</div>
+          </div>
+        </div>
+        <div style="color:#333;margin-bottom:12px">${app.desc} — This is a demo app in the mock store.</div>
+        <div style="display:flex;gap:8px; justify-content:flex-end;">
+          <button class="small-btn" onclick="installApp('${app.id}','${escapeJs(app.icon)}','${escapeJs(app.name)}','${app.bg}', ${JSON.stringify(app)})">${installed[app.id] ? 'OPEN' : 'GET'}</button>
+          <button class="small-btn secondary" onclick="hideDetail()">Close</button>
+        </div>
+      `;
+      document.getElementById('detail-overlay').style.display = 'flex';
+    }
+    function hideDetail(e) {
+      if (e && e.target !== document.getElementById('detail-overlay')) return;
+      document.getElementById('detail-overlay').style.display = 'none';
+    }
+
+    // install / uninstall logic
+    function installApp(id, icon, label, bg, appObj) {
+      if (installed[id]) { openInstalledApp(appObj || storeApps.find(s=>s.id===id)); return; }
+      // simulate download
+      const original = document.querySelector(`#actions-${id} .small-btn`);
+      if (original) { original.textContent = 'LOADING...'; original.disabled = true; }
+      setTimeout(() => {
+        installed[id] = true;
+        // add to home
+        addToHome(id, icon, label, bg);
+        renderStore();
+        alert(label + ' installed');
+      }, 700);
+    }
+
+    function uninstallApp(id) {
+      if (!installed[id]) return;
+      // remove from home grid icons (first matching)
+      const grid = document.getElementById('home-grid');
+      const items = Array.from(grid.querySelectorAll('.app'));
+      for (let el of items) {
+        if (el.dataset && el.dataset.appId === id) {
+          grid.removeChild(el);
+          break;
+        }
+      }
+      delete installed[id];
+      renderStore();
+      alert('Uninstalled');
+    }
+
+    function addToHome(id, icon, label, bg) {
+      const grid = document.getElementById('home-grid');
+      const el = document.createElement('div');
+      el.className = 'app';
+      el.dataset.appId = id;
+      el.onclick = () => {
+        // open built-in windows if available
+        if (id === 'snake') openApp('app-snake', false);
+        else if (id === 'paint') openApp('app-paint', true);
+        else openGenericApp(id, icon, label, bg);
+      };
+      el.innerHTML = `<div class="icon" style="background:${bg};">${icon}</div><div class="label">${label}</div>`;
+      grid.appendChild(el);
+    }
+
+    function openInstalledApp(app) {
+      if (!app) app = storeApps.find(a=>installed[a.id]);
+      if (!app) return;
+      if (app.id === 'snake') openApp('app-snake', false);
+      else if (app.id === 'paint') openApp('app-paint', true);
+      else openGenericApp(app.id, app.icon, app.name, app.bg);
+      hideDetail();
+    }
+
+    // generic app creation for demo apps without a custom window
+    function openGenericApp(id, icon, label, bg) {
+      const container = document.getElementById('app-generic-container');
+      container.innerHTML = `
+        <div id="app-generic-${id}" class="app-window light active" style="background:${bg}; color:${getContrastText(bg)}; z-index:1000;">
+          <div style="padding:16px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:900">${label}</div>
+            <div>
+              <button class="btn" style="background:${getContrastText(bg)==='#000' ? '#fff' : '#000'; color:${getContrastText(bg)==='#000' ? '#000' : '#fff'}" onclick="goHome()">Home</button>
+            </div>
+          </div>
+          <div style="padding:12px;">
+            <div style="background:rgba(255,255,255,0.85); color:#111; padding:12px; border-radius:8px;">
+              <strong>${label}</strong><div style="margin-top:8px">${(storeApps.find(a=>a.id===id)||{}).desc || 'Demo app content'}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      // hide home area
+      document.getElementById('home').style.display = 'none';
+      document.querySelector('.status').style.color = getContrastText(bg);
+      document.querySelector('.home-indicator').style.background = getContrastText(bg) === '#000' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.85)';
+    }
+
+    // small utility: pick contrasting text for icon background
+    function getContrastText(hex) {
+      // remove # if present
+      if (!hex) return '#000';
+      const h = hex.replace('#','');
+      const r = parseInt(h.slice(0,2),16);
+      const g = parseInt(h.slice(2,4),16);
+      const b = parseInt(h.slice(4,6),16);
+      // luminance
+      const luminance = (0.299*r + 0.587*g + 0.114*b)/255;
+      return luminance > 0.6 ? '#000' : '#fff';
+    }
+
+    // escape for injecting text into onclick attributes in detail
+    function escapeJs(s) { return String(s).replace(/'/g,"\\'").replace(/"/g,'\\"'); }
+
+    // --- Paint app
+    (function initPaint() {
       const canvas = document.getElementById('paintCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -452,11 +705,11 @@
       window.clearPaint = function() {
         ctx.clearRect(0,0,canvas.width,canvas.height);
       };
-      window.clearPaint(); // start blank
+      window.clearPaint();
     })();
 
-    // Simple Snake
-    (function() {
+    // --- Snake game (same as before)
+    (function initSnake() {
       const canvas = document.getElementById('snakeCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -477,46 +730,22 @@
       function draw() {
         ctx.fillStyle = '#000';
         ctx.fillRect(0,0,canvas.width,canvas.height);
-
-        // apple
         ctx.fillStyle = '#ff3b30';
         ctx.fillRect(apple.x*tile, apple.y*tile, tile, tile);
-
-        // snake
         ctx.fillStyle = '#7ed957';
-        snake.forEach((s,i) => {
-          ctx.fillRect(s.x*tile, s.y*tile, tile-1, tile-1);
-        });
+        snake.forEach((s) => ctx.fillRect(s.x*tile, s.y*tile, tile-1, tile-1));
       }
 
       function step() {
         const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-
-        // wrap
         if (head.x < 0) head.x = cols-1;
         if (head.x >= cols) head.x = 0;
         if (head.y < 0) head.y = rows-1;
         if (head.y >= rows) head.y = 0;
 
-        // collision
-        for (let s of snake) {
-          if (s.x === head.x && s.y === head.y) {
-            stopSnake();
-            alert('Game over! Score: ' + (snake.length-1));
-            snake = [{x: Math.floor(cols/2), y: Math.floor(rows/2)}];
-            dir = {x:1,y:0};
-            apple = spawnApple();
-            return;
-          }
-        }
+        for (let s of snake) { if (s.x === head.x && s.y === head.y) { stopSnake(); alert('Game over! Score: ' + (snake.length-1)); snake = [{x: Math.floor(cols/2), y: Math.floor(rows/2)}]; dir = {x:1,y:0}; apple = spawnApple(); return; } }
         snake.unshift(head);
-
-        // eat?
-        if (head.x === apple.x && head.y === apple.y) {
-          apple = spawnApple();
-        } else {
-          snake.pop();
-        }
+        if (head.x === apple.x && head.y === apple.y) apple = spawnApple(); else snake.pop();
       }
 
       function loop() {
@@ -526,10 +755,7 @@
       }
 
       window.startSnake = function() {
-        if (!running) {
-          running = true;
-          loop();
-        }
+        if (!running) { running = true; loop(); }
       };
       window.stopSnake = function() {
         running = false;
@@ -537,8 +763,7 @@
         timer = null;
       };
 
-      window.addEventListener('keydown', function(e) {
-        // only respond when snake app active
+      window.addEventListener('keydown', (e) => {
         if (!document.getElementById('app-snake').classList.contains('active')) return;
         if (e.key === 'ArrowUp' && dir.y !== 1) dir = {x:0,y:-1};
         if (e.key === 'ArrowDown' && dir.y !== -1) dir = {x:0,y:1};
@@ -548,6 +773,13 @@
 
       draw();
     })();
+
+    // --- Initialize store and home
+    function init() {
+      // populate categories and store items
+      renderStore();
+    }
+    init();
 
     // start on home
     goHome();
